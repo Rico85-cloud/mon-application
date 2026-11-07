@@ -3,7 +3,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello():
-    return "Bonjour ! Mon application Python fonctionne sur Internet grâce à Render."
+    return "Salut ! Je m'appelle Eric."
 
 if __name__ == '__main__':
     app.run(port=5000)
