@@ -36,7 +36,7 @@ def lire_messages_depuis_github():
         elif reponse.status_code == 401:
             return ["Erreur d'authentification : Votre GITHUB_TOKEN n'est pas valide ou a expiré."]
         else:
-            return [f"Erreur GitHub (Code {reponse.status_code}) : Vérifiez votre pseudo '{GITHUB_USER}'."]
+            return [f"Erreur GitHub (Code {reponse.status_code}) : Vérifiez le nom du dépôt ou du profil."]
     except Exception as e:
         return [f"Impossible de joindre GitHub pour le moment : {str(e)}"]
 
