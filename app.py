@@ -6,7 +6,7 @@ import base64
 app = Flask(__name__)
 
 # CONFIGURATION GITHUB
-GITHUB_USER = os.environ.get("GITHUB_USER", "Rico85-cloud")  # Prend la variable Render ou celle-ci
+GITHUB_USER = "rico85-cloud"
 GITHUB_REPO = "mon-application"
 FICHIER_PATH = "messages.txt"
 
