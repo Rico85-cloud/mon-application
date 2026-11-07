@@ -22,14 +22,14 @@ def lire_messages_depuis_github():
     
     headers = {
         "Authorization": f"token {TOKEN}",
-        "Accept": "application/vnd.github.v3+json"  # Retour au format standard JSON
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "Flask-Livre-Dor-Application"  # Ajout de l'identifiant pour GitHub
     }
     
     try:
         reponse = requests.get(URL_API, headers=headers, timeout=5)
         if reponse.status_code == 200:
             donnees = reponse.json()
-            # On décode le contenu reçu qui est encodé en Base64 par GitHub
             contenu_decode = base64.b64decode(donnees['content']).decode('utf-8')
             return [l.strip() for l in contenu_decode.split("\n") if l.strip()]
         elif reponse.status_code == 404:
@@ -37,7 +37,7 @@ def lire_messages_depuis_github():
         elif reponse.status_code == 401:
             return ["Erreur d'authentification : Votre GITHUB_TOKEN n'est pas valide."]
         else:
-            return [f"Erreur GitHub (Code {reponse.status_code}) : Problème d'accès au fichier."]
+            return [f"Erreur GitHub (Code {reponse.status_code}) : Problème d'accès."]
     except Exception as e:
         return [f"Impossible de joindre GitHub pour le moment : {str(e)}"]
 
@@ -47,7 +47,8 @@ def sauvegarder_sur_github(nouveau_msg):
     
     headers = {
         "Authorization": f"token {TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "Flask-Livre-Dor-Application"
     }
     
     sha = ""
