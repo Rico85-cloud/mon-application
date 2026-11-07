@@ -5,13 +5,9 @@ import base64
 
 app = Flask(__name__)
 
-# CONFIGURATION GITHUB
-GITHUB_USER = "rico85-cloud"
-GITHUB_REPO = "mon-application"
-FICHIER_PATH = "messages.txt"
-
+# CONFIGURATION DIRECTE GITHUB
 TOKEN = os.environ.get("GITHUB_TOKEN")
-URL_API = f"https://github.com{GITHUB_USER}/{GITHUB_REPO}/contents/{FICHIER_PATH}"
+URL_API = "https://github.com"
 
 MENU = """
 <nav style="background-color: #f0f0f0; padding: 10px; margin-bottom: 20px; font-family: sans-serif;">
