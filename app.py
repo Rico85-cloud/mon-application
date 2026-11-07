@@ -5,8 +5,8 @@ import base64
 
 app = Flask(__name__)
 
-# CONFIGURATION GITHUB (Remplissez avec vos informations)
-GITHUB_USER = "Rico85-cloud"  # <-- Mettez votre vrai pseudo GitHub ici !
+# CONFIGURATION GITHUB
+GITHUB_USER = os.environ.get("GITHUB_USER", "VOTRE_PSEUDO_GITHUB")  # Prend la variable Render ou celle-ci
 GITHUB_REPO = "mon-application"
 FICHIER_PATH = "messages.txt"
 
@@ -22,46 +22,64 @@ MENU = """
 
 def lire_messages_depuis_github():
     if not TOKEN:
-        return ["Erreur : Clé GITHUB_TOKEN manquante dans Render."]
+        return ["Configuration incomplète : La clé GITHUB_TOKEN est introuvable dans Render."]
     
-    headers = {"Authorization": f"token {TOKEN}"}
-    reponse = requests.get(URL_API, headers=headers)
+    headers = {
+        "Authorization": f"token {TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
     
-    if reponse.status_code == 200:
-        donnees = reponse.json()
-        contenu_decode = base64.b64decode(donnees['content']).decode('utf-8')
-        return [l.strip() for l in contenu_decode.split("\n") if l.strip()]
-    return ["Bienvenue sur mon livre d'or permanent ! Laissez le premier message."]
+    try:
+        reponse = requests.get(URL_API, headers=headers, timeout=5)
+        if reponse.status_code == 200:
+            donnees = reponse.json()
+            contenu_decode = base64.b64decode(donnees['content']).decode('utf-8')
+            return [l.strip() for l in contenu_decode.split("\n") if l.strip()]
+        elif reponse.status_code == 404:
+            return ["Bienvenue ! Le fichier de sauvegarde va se créer lors du premier message."]
+        elif reponse.status_code == 401:
+            return ["Erreur d'authentification : Votre GITHUB_TOKEN n'est pas valide ou a expiré."]
+        else:
+            return [f"Erreur GitHub (Code {reponse.status_code}) : Vérifiez votre pseudo '{GITHUB_USER}'."]
+    except Exception as e:
+        return [f"Impossible de joindre GitHub pour le moment : {str(e)}"]
 
 def sauvegarder_sur_github(nouveau_msg):
     if not TOKEN: 
         return
-    headers = {"Authorization": f"token {TOKEN}"}
+    headers = {
+        "Authorization": f"token {TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
     
-    reponse = requests.get(URL_API, headers=headers)
     sha = ""
     contenu_actuel = ""
     
-    if reponse.status_code == 200:
-        donnees = reponse.json()
-        sha = donnees['sha']
-        contenu_actuel = base64.b64decode(donnees['content']).decode('utf-8')
-    
-    nouveau_contenu = contenu_actuel + nouveau_msg + "\n"
-    contenu_encode = base64.b64encode(nouveau_contenu.encode('utf-8')).decode('utf-8')
-    
-    payload = {
-        "message": "Nouveau message dans le livre d'or",
-        "content": contenu_encode
-    }
-    if sha:
-        payload["sha"] = sha
+    try:
+        reponse = requests.get(URL_API, headers=headers, timeout=5)
+        if reponse.status_code == 200:
+            donnees = reponse.json()
+            sha = donnees['sha']
+            contenu_actuel = base64.b64decode(donnees['content']).decode('utf-8')
         
-    requests.put(URL_API, headers=headers, json=payload)
+        nouveau_contenu = contenu_actuel + nouveau_msg + "\n"
+        contenu_encode = base64.b64encode(nouveau_contenu.encode('utf-8')).decode('utf-8')
+        
+        payload = {
+            "message": "Nouveau message dans le livre d'or",
+            "content": contenu_encode
+        }
+        if sha:
+            payload["sha"] = sha
+            
+        requests.put(URL_API, headers=headers, json=payload, timeout=5)
+    except Exception:
+        pass
 
 @app.route('/')
 def hello():
-    return MENU + "<h1>Accueil</h1><p>Allez sur le livre d'or pour tester la sauvegarde gratuite sans disque !</p>"
+    etat_token = "<span style='color:green;'>Configuration détectée !</span>" if TOKEN else "<span style='color:red;'>Clé GITHUB_TOKEN manquante dans Render.</span>"
+    return MENU + f"<h1>Accueil</h1><p>Statut de la connexion : {etat_token}</p><p>Rendez-vous sur l'onglet Livre d'or pour tester.</p>"
 
 @app.route('/livredor', methods=['GET', 'POST'])
 def livredor():
@@ -82,7 +100,7 @@ def livredor():
     """
 
     liste_messages_html = "<h3>Messages :</h3><ul>"
-    for msg in reversed(tous_les_messages):
+    for msg in tous_les_messages:
         liste_messages_html += f"<li style='margin-bottom: 10px; font-family: sans-serif;'>{msg}</li>"
     liste_messages_html += "</ul>"
 
