@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # CONFIGURATION GITHUB (À personnaliser)
 # Remplacez par votre pseudo GitHub et le nom exact de votre dépôt
-GITHUB_USER = "VOTRE_PSEUDO_GITHUB"
+GITHUB_USER = "Rico85-cloud"
 GITHUB_REPO = "mon-application"
 FICHIER_PATH = "messages.txt"
 
