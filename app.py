@@ -5,14 +5,12 @@ import base64
 
 app = Flask(__name__)
 
-# CONFIGURATION GITHUB (À personnaliser)
-# Remplacez par votre pseudo GitHub et le nom exact de votre dépôt
-GITHUB_USER = "Rico85-cloud"
+# CONFIGURATION GITHUB (Remplissez avec vos informations)
+GITHUB_USER = "Rico85-cloud"  # <-- Mettez votre vrai pseudo GitHub ici !
 GITHUB_REPO = "mon-application"
 FICHIER_PATH = "messages.txt"
 
 TOKEN = os.environ.get("GITHUB_TOKEN")
-URL_API = f"https://github.com{FICHIER_PATH}" # Simplifié ci-dessous via l'URL directe :
 URL_API = f"https://github.com{GITHUB_USER}/{GITHUB_REPO}/contents/{FICHIER_PATH}"
 
 MENU = """
@@ -31,16 +29,15 @@ def lire_messages_depuis_github():
     
     if reponse.status_code == 200:
         donnees = reponse.json()
-        # GitHub stocke le texte en Base64, on doit le décoder
         contenu_decode = base64.b64decode(donnees['content']).decode('utf-8')
         return [l.strip() for l in contenu_decode.split("\n") if l.strip()]
-    return ["Bienvenue sur mon livre d'or permanent !"]
+    return ["Bienvenue sur mon livre d'or permanent ! Laissez le premier message."]
 
 def sauvegarder_sur_github(nouveau_msg):
-    if not TOKEN: return
+    if not TOKEN: 
+        return
     headers = {"Authorization": f"token {TOKEN}"}
     
-    # 1. On récupère le fichier actuel pour obtenir son identifiant unique ("sha")
     reponse = requests.get(URL_API, headers=headers)
     sha = ""
     contenu_actuel = ""
@@ -50,11 +47,9 @@ def sauvegarder_sur_github(nouveau_msg):
         sha = donnees['sha']
         contenu_actuel = base64.b64decode(donnees['content']).decode('utf-8')
     
-    # 2. On ajoute le nouveau message au texte existant
     nouveau_contenu = contenu_actuel + nouveau_msg + "\n"
     contenu_encode = base64.b64encode(nouveau_contenu.encode('utf-8')).decode('utf-8')
     
-    # 3. Envoi de la mise à jour à GitHub
     payload = {
         "message": "Nouveau message dans le livre d'or",
         "content": contenu_encode
