@@ -22,18 +22,20 @@ def lire_messages_depuis_github():
     
     headers = {
         "Authorization": f"token {TOKEN}",
-        "Accept": "application/vnd.github.v3.raw"  # Correction apportée ici (format .raw)
+        "Accept": "application/vnd.github.v3+json"  # Retour au format standard JSON
     }
     
     try:
         reponse = requests.get(URL_API, headers=headers, timeout=5)
         if reponse.status_code == 200:
-            # Si on reçoit du texte brut, on le sépare par ligne directement
-            return [l.strip() for l in reponse.text.split("\n") if l.strip()]
+            donnees = reponse.json()
+            # On décode le contenu reçu qui est encodé en Base64 par GitHub
+            contenu_decode = base64.b64decode(donnees['content']).decode('utf-8')
+            return [l.strip() for l in contenu_decode.split("\n") if l.strip()]
         elif reponse.status_code == 404:
             return ["Bienvenue ! Le fichier de sauvegarde va se créer lors du premier message."]
         elif reponse.status_code == 401:
-            return ["Erreur d'authentification : Votre GITHUB_TOKEN n'est pas valide ou a expiré."]
+            return ["Erreur d'authentification : Votre GITHUB_TOKEN n'est pas valide."]
         else:
             return [f"Erreur GitHub (Code {reponse.status_code}) : Problème d'accès au fichier."]
     except Exception as e:
@@ -43,8 +45,7 @@ def sauvegarder_sur_github(nouveau_msg):
     if not TOKEN: 
         return
     
-    # Pour l'écriture, on repasse sur l'API standard JSON de GitHub
-    headers_api = {
+    headers = {
         "Authorization": f"token {TOKEN}",
         "Accept": "application/vnd.github.v3+json"
     }
@@ -53,7 +54,7 @@ def sauvegarder_sur_github(nouveau_msg):
     contenu_actuel = ""
     
     try:
-        reponse = requests.get(URL_API, headers=headers_api, timeout=5)
+        reponse = requests.get(URL_API, headers=headers, timeout=5)
         if reponse.status_code == 200:
             donnees = reponse.json()
             sha = donnees['sha']
@@ -69,7 +70,7 @@ def sauvegarder_sur_github(nouveau_msg):
         if sha:
             payload["sha"] = sha
             
-        requests.put(URL_API, headers=headers_api, json=payload, timeout=5)
+        requests.put(URL_API, headers=headers, json=payload, timeout=5)
     except Exception:
         pass
 
@@ -97,7 +98,7 @@ def livredor():
     """
 
     liste_messages_html = "<h3>Messages :</h3><ul>"
-    for msg in reversed(tous_les_messages):  # Affichage du plus récent au plus ancien
+    for msg in reversed(tous_les_messages):
         liste_messages_html += f"<li style='margin-bottom: 10px; font-family: sans-serif;'>{msg}</li>"
     liste_messages_html += "</ul>"
 
